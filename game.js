@@ -75,14 +75,38 @@
     ctx.textBaseline = 'middle';
     ctx.fillText(String(food.level), centerX, centerY + 3);
   };
+  const drawWormHead = (segment) => {
+    const centerX = segment.x * state.cell + state.cell / 2; const centerY = segment.y * state.cell + state.cell / 2;
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(Math.atan2(state.direction.y, state.direction.x));
+    ctx.fillStyle = '#f4f7ff';
+    ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#080a18';
+    ctx.beginPath(); ctx.arc(4, -4, 1.8, 0, Math.PI * 2); ctx.arc(4, 4, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#080a18'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(2, -2); ctx.quadraticCurveTo(7, 4, 2, 2); ctx.stroke();
+    ctx.restore();
+  };
+  const drawEnemyStar = (enemy) => {
+    const centerX = enemy.x * state.cell + state.cell / 2; const centerY = enemy.y * state.cell + state.cell / 2;
+    const outer = 11; const inner = 5; const points = 5;
+    ctx.save(); ctx.translate(centerX, centerY); ctx.fillStyle = '#ff668d'; ctx.beginPath();
+    for (let index = 0; index < points * 2; index += 1) {
+      const radius = index % 2 === 0 ? outer : inner; const angle = -Math.PI / 2 + (index * Math.PI) / points;
+      const x = Math.cos(angle) * radius; const y = Math.sin(angle) * radius;
+      if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  };
   const draw = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#090d24'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     for (let i = 0; i < 36; i += 1) drawCell((i * 17) % state.cols, (i * 7) % state.rows, i % 3 ? 'rgba(130,201,255,.24)' : '#82c9ff', i % 3 ? 1 : 2);
     state.food.forEach(drawFood);
     state.bullets.forEach((bullet) => drawCell(bullet.x, bullet.y, '#ffca7a', 3));
-    drawCell(state.enemy.x, state.enemy.y, '#ff668d', 9);
-    state.worm.forEach((segment, index) => drawCell(segment.x, segment.y, index === 0 ? '#f4f7ff' : '#82c9ff', index === 0 ? 10 : 8));
+    drawEnemyStar(state.enemy);
+    state.worm.forEach((segment, index) => index === 0 ? drawWormHead(segment) : drawCell(segment.x, segment.y, '#82c9ff', 8));
     if (state.shield > 0 && state.running) { ctx.strokeStyle = `rgba(124, 220, 255, ${.18 + state.shield * .12})`; ctx.lineWidth = 3; ctx.strokeRect((state.worm[0].x - 1) * state.cell, (state.worm[0].y - 1) * state.cell, state.cell * 3, state.cell * 3); }
   };
   const setDirection = (direction) => {
@@ -101,6 +125,16 @@
     if (nextX < 1 || nextX >= state.cols - 1) { state.enemy.direction *= -1; state.enemy.y = Math.min(state.rows - 2, state.enemy.y + 1); }
     else state.enemy.x = nextX;
   };
+  const isInside = (cell) => cell.x >= 0 && cell.x < state.cols && cell.y >= 0 && cell.y < state.rows;
+  const isWormCell = (cell) => state.worm.some((segment) => same(segment, cell));
+  const turnAtBoundary = (head) => {
+    if (isInside(head)) return head;
+    const candidates = state.direction.x !== 0 ? [{ x: 0, y: 1 }, { x: 0, y: -1 }] : [{ x: 1, y: 0 }, { x: -1, y: 0 }];
+    const next = candidates.map((direction) => ({ direction, head: { x: state.worm[0].x + direction.x, y: state.worm[0].y + direction.y } })).find((candidate) => isInside(candidate.head) && !isWormCell(candidate.head));
+    if (!next) return null;
+    state.direction = next.direction; state.nextDirection = next.direction;
+    return next.head;
+  };
   const hit = () => {
     if (state.shield > 0) { state.shield -= 1; setStatus(`방패가 충격을 흡수했습니다. 남은 방패: ${state.shield}/3`); }
     else { state.energy -= 1; setStatus(`직접 피격! 에너지 ${state.energy}/10`); }
@@ -110,8 +144,9 @@
   const tick = () => {
     if (!state.running || state.paused) return;
     state.direction = state.nextDirection;
-    const head = { x: state.worm[0].x + state.direction.x, y: state.worm[0].y + state.direction.y };
-    if (head.x < 0 || head.x >= state.cols || head.y < 0 || head.y >= state.rows || state.worm.some((segment) => same(segment, head))) return end(false);
+    const proposedHead = { x: state.worm[0].x + state.direction.x, y: state.worm[0].y + state.direction.y };
+    const head = turnAtBoundary(proposedHead);
+    if (!head || isWormCell(head)) return end(false);
     state.worm.unshift(head);
     const foodIndex = state.food.findIndex((food) => same(food, head));
     if (foodIndex >= 0) { const food = state.food.splice(foodIndex, 1)[0]; state.score += food.level; state.level += 1; setStatus(`레벨 ${food.level} 먹이 획득! 지렁이가 성장했습니다.`); if (!state.food.length) return end(true); }
