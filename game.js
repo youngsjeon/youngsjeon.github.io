@@ -59,11 +59,27 @@
     if (!radius) { ctx.fillRect(px + 2, py + 2, state.cell - 4, state.cell - 4); return; }
     ctx.beginPath(); ctx.arc(px + state.cell / 2, py + state.cell / 2, radius, 0, Math.PI * 2); ctx.fill();
   };
+  const drawFood = (food) => {
+    const px = food.x * state.cell; const py = food.y * state.cell; const centerX = px + state.cell / 2; const centerY = py + state.cell / 2;
+    const size = 9 + food.level;
+    ctx.fillStyle = ['#6fe7ff', '#79d7ff', '#91a8ff', '#c28cff', '#ff9bd0'][food.level - 1];
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY - size);
+    ctx.lineTo(centerX + size, centerY + size);
+    ctx.lineTo(centerX - size, centerY + size);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#080a18';
+    ctx.font = '700 11px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(food.level), centerX, centerY + 3);
+  };
   const draw = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#090d24'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     for (let i = 0; i < 36; i += 1) drawCell((i * 17) % state.cols, (i * 7) % state.rows, i % 3 ? 'rgba(130,201,255,.24)' : '#82c9ff', i % 3 ? 1 : 2);
-    state.food.forEach((food) => { drawCell(food.x, food.y, ['#6fe7ff', '#79d7ff', '#91a8ff', '#c28cff', '#ff9bd0'][food.level - 1], 6 + food.level); });
+    state.food.forEach(drawFood);
     state.bullets.forEach((bullet) => drawCell(bullet.x, bullet.y, '#ffca7a', 3));
     drawCell(state.enemy.x, state.enemy.y, '#ff668d', 9);
     state.worm.forEach((segment, index) => drawCell(segment.x, segment.y, index === 0 ? '#f4f7ff' : '#82c9ff', index === 0 ? 10 : 8));
