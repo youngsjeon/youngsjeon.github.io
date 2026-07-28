@@ -67,6 +67,11 @@
         <div class="game-shell">
           <div class="game-toolbar"><div><span class="hud-label">SCORE</span><strong id="score">0</strong></div><div><span class="hud-label">HIGH</span><strong id="high-score">0</strong></div><div><span class="hud-label">ENERGY</span><strong id="energy">10</strong></div><div><span class="hud-label">SHIELD</span><strong id="shield">3/3</strong></div></div>
           <canvas id="game-canvas" width="720" height="420" aria-label="우주 지렁이 게임 화면"></canvas>
+          <div id="game-scene" class="game-scene" hidden aria-live="polite">
+            <div id="scene-hearts" class="scene-hearts" aria-hidden="true">♥　♥　♥</div>
+            <div id="scene-couple" class="scene-couple"><span class="scene-worm">🪱</span><span class="scene-love">♥</span><span class="scene-worm">🪱</span></div>
+            <p id="scene-message" class="scene-message"></p>
+          </div>
           <div class="game-controls" aria-label="게임 조작">
             <button class="game-button" id="start-game" type="button">START</button>
             <button class="game-button" id="pause-game" type="button" disabled>PAUSE</button>

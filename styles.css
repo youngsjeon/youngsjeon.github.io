@@ -55,6 +55,14 @@ h2 { margin-bottom: 1.2rem; font-size: clamp(2.3rem, 5vw, 4.8rem); line-height: 
 .hud-label { color: var(--muted); font-size: .62rem; letter-spacing: .13em; }
 .game-toolbar strong { color: var(--blue); font-size: 1.1rem; }
 #game-canvas { display: block; width: 100%; height: auto; border: 1px solid rgba(130, 201, 255, .26); image-rendering: pixelated; }
+.game-shell { position: relative; }
+.game-scene { position: absolute; inset: 4.55rem 1rem auto; min-height: 13rem; display: grid; place-items: center; align-content: center; gap: .6rem; padding: 1.5rem; color: var(--ink); text-align: center; background: radial-gradient(circle, rgba(65, 44, 123, .96), rgba(7, 10, 27, .97) 72%); border: 1px solid rgba(130, 201, 255, .5); }
+.game-scene[hidden] { display: none; }
+.scene-couple { display: flex; align-items: center; gap: 1rem; font-size: clamp(2.5rem, 8vw, 4rem); line-height: 1; }
+.scene-worm { display: inline-block; filter: drop-shadow(0 0 .6rem rgba(130, 201, 255, .8)); }
+.scene-love, .scene-hearts { color: #ff8db6; text-shadow: 0 0 1rem rgba(255, 80, 150, .8); }
+.scene-hearts { min-height: 1.5rem; font-size: 1.2rem; letter-spacing: .4rem; }
+.scene-message { margin: 0; color: var(--blue); font-size: .85rem; letter-spacing: .12em; text-transform: uppercase; }
 .game-controls { display: flex; align-items: center; gap: .6rem; margin-top: .8rem; }
 .game-button, .d-pad button { color: var(--ink); border: 1px solid var(--line); background: rgba(37, 52, 103, .5); cursor: pointer; }
 .game-button { padding: .55rem .8rem; font-size: .7rem; letter-spacing: .12em; }
@@ -83,5 +91,6 @@ h2 { margin-bottom: 1.2rem; font-size: clamp(2.3rem, 5vw, 4.8rem); line-height: 
   .hero { min-height: 70vh; }
   .game-controls { align-items: flex-start; flex-wrap: wrap; }
   .d-pad { width: 100%; margin-left: 0; justify-content: center; }
+  .game-scene { inset: 4.55rem .6rem auto; min-height: 11rem; }
   .site-footer { align-items: flex-start; flex-direction: column; }
 }

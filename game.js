@@ -7,6 +7,10 @@
   const energyEl = document.querySelector('#energy');
   const shieldEl = document.querySelector('#shield');
   const statusEl = document.querySelector('#game-status');
+  const scene = document.querySelector('#game-scene');
+  const sceneHearts = document.querySelector('#scene-hearts');
+  const sceneCouple = document.querySelector('#scene-couple');
+  const sceneMessage = document.querySelector('#scene-message');
   const startButton = document.querySelector('#start-game');
   const pauseButton = document.querySelector('#pause-game');
   const restartPrompt = document.querySelector('#restart-prompt');
@@ -16,7 +20,7 @@
   const state = {
     cols: 24, rows: 14, cell: 30, worm: [], direction: { x: 1, y: 0 }, nextDirection: { x: 1, y: 0 },
     food: [], bullets: [], enemy: { x: 4, y: 2, direction: 1, drop: 0 }, score: 0, energy: 10, shield: 3,
-    highScore: Number.isFinite(storedHigh) ? storedHigh : 0, timer: null, bulletTimer: null, running: false, paused: false,
+    highScore: Number.isFinite(storedHigh) ? storedHigh : 0, timer: null, bulletTimer: null, sequenceTimers: [], running: false, paused: false,
     level: 0, tickMs: 260
   };
   highScoreEl.textContent = String(state.highScore);
@@ -42,7 +46,14 @@
     if (state.bulletTimer) window.clearInterval(state.bulletTimer);
     state.timer = null;
     state.bulletTimer = null;
+    state.sequenceTimers.forEach((timer) => window.clearTimeout(timer));
+    state.sequenceTimers = [];
   };
+  const showScene = (message, ending = false, countdown = '') => {
+    scene.hidden = false; scene.dataset.scene = ending ? 'ending' : 'intro'; sceneMessage.textContent = countdown || message;
+    sceneHearts.hidden = !ending; sceneCouple.innerHTML = ending ? '<span class="scene-worm">🪱</span><span class="scene-love">♥　💋　♥</span><span class="scene-worm">🪱</span>' : '<span class="scene-worm">🪱</span><span class="scene-love">♥</span><span class="scene-worm">🪱</span>';
+  };
+  const hideScene = () => { scene.hidden = true; sceneHearts.hidden = true; };
   const addFood = (count) => {
     while (state.food.length < count) state.food.push({ ...randomFreeCell(), level: Math.min(5, state.food.length + 1) });
   };
@@ -111,6 +122,7 @@
     if (state.shield > 0 && state.running) { ctx.strokeStyle = `rgba(124, 220, 255, ${.18 + state.shield * .12})`; ctx.lineWidth = 3; ctx.strokeRect((state.worm[0].x - 1) * state.cell, (state.worm[0].y - 1) * state.cell, state.cell * 3, state.cell * 3); }
   };
   const setDirection = (direction) => {
+    if (!state.running) return;
     const vectors = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
     const next = vectors[direction];
     if (!next || (next.x + state.direction.x === 0 && next.y + state.direction.y === 0)) return;
@@ -160,8 +172,9 @@
     if (bulletHit) { state.bullets = state.bullets.filter((bullet) => !(Math.round(bullet.x) === head.x && Math.round(bullet.y) === head.y)); hit(); }
     moveEnemy(); draw();
   };
-  const end = (won) => { state.running = false; state.paused = false; stopTimers(); if (state.score > state.highScore) { state.highScore = state.score; localStorage.setItem('worm-high-score', String(state.highScore)); } updateHud(); draw(); setStatus(won ? 'MISSION COMPLETE — 이제 여자친구를 만나러 갑니다.' : 'GAME OVER — 다시 시작하겠습니까?'); restartPrompt.hidden = won; startButton.textContent = 'RESTART'; pauseButton.disabled = true; };
-  const start = () => { restartPrompt.hidden = true; reset(); state.running = true; startButton.textContent = 'RESTART'; pauseButton.disabled = false; state.timer = window.setInterval(tick, state.tickMs); state.bulletTimer = window.setInterval(fire, 5000); setStatus('탐사 시작 — 방향키, WASD 또는 터치 버튼으로 이동하세요.'); draw(); };
+  const end = (won) => { state.running = false; state.paused = false; stopTimers(); if (state.score > state.highScore) { state.highScore = state.score; localStorage.setItem('worm-high-score', String(state.highScore)); } updateHud(); draw(); setStatus(won ? 'MISSION COMPLETE — 이제 여자친구를 만나러 갑니다.' : 'GAME OVER — 다시 시작하겠습니까?'); restartPrompt.hidden = won; startButton.textContent = 'RESTART'; pauseButton.disabled = true; if (won) showScene('MISSION COMPLETE', true); };
+  const beginPlay = () => { hideScene(); state.running = true; startButton.disabled = false; startButton.textContent = 'RESTART'; pauseButton.disabled = false; state.timer = window.setInterval(tick, state.tickMs); state.bulletTimer = window.setInterval(fire, 5000); setStatus('탐사 시작 — 방향키, WASD 또는 터치 버튼으로 이동하세요.'); draw(); };
+  const start = () => { restartPrompt.hidden = true; stopTimers(); reset(); state.running = false; startButton.disabled = true; pauseButton.disabled = true; showScene('GET READY'); setStatus('여자친구가 떠난 후 카운트다운이 시작됩니다.'); const sequence = [{ delay: 900, message: '여자친구가 떠났습니다.' }, { delay: 1700, countdown: '3' }, { delay: 2400, countdown: '2' }, { delay: 3100, countdown: '1' }, { delay: 3800, play: true }]; sequence.forEach((step) => { const timer = window.setTimeout(() => { if (step.play) beginPlay(); else showScene(step.message || 'GET READY', false, step.countdown); }, step.delay); state.sequenceTimers.push(timer); }); };
   startButton.addEventListener('click', start);
   pauseButton.addEventListener('click', () => { if (!state.running) return; state.paused = !state.paused; pauseButton.textContent = state.paused ? 'RESUME' : 'PAUSE'; setStatus(state.paused ? '일시정지 — RESUME을 눌러 계속하세요.' : '탐사 재개'); draw(); });
   restartYes.addEventListener('click', start);
