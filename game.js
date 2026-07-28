@@ -80,8 +80,9 @@
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate(Math.atan2(state.direction.y, state.direction.x));
-    ctx.fillStyle = '#f4f7ff';
+    ctx.fillStyle = '#f4f7ff'; ctx.strokeStyle = '#82c9ff'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.stroke();
     ctx.fillStyle = '#080a18';
     ctx.beginPath(); ctx.arc(4, -4, 1.8, 0, Math.PI * 2); ctx.arc(4, 4, 1.8, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#080a18'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
@@ -97,7 +98,7 @@
       const x = Math.cos(angle) * radius; const y = Math.sin(angle) * radius;
       if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
-    ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#ffd1e0'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
   };
   const draw = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -129,7 +130,10 @@
   const isWormCell = (cell) => state.worm.some((segment) => same(segment, cell));
   const turnAtBoundary = (head) => {
     if (isInside(head)) return head;
-    const candidates = state.direction.x !== 0 ? [{ x: 0, y: 1 }, { x: 0, y: -1 }] : [{ x: 1, y: 0 }, { x: -1, y: 0 }];
+    const atHorizontalEdge = head.x < 0 || head.x >= state.cols;
+    const candidates = atHorizontalEdge
+      ? (state.worm[0].y < state.rows - 1 ? [{ x: 0, y: 1 }, { x: 0, y: -1 }] : [{ x: 0, y: -1 }, { x: 0, y: 1 }])
+      : (state.worm[0].x < state.cols - 1 ? [{ x: 1, y: 0 }, { x: -1, y: 0 }] : [{ x: -1, y: 0 }, { x: 1, y: 0 }]);
     const next = candidates.map((direction) => ({ direction, head: { x: state.worm[0].x + direction.x, y: state.worm[0].y + direction.y } })).find((candidate) => isInside(candidate.head) && !isWormCell(candidate.head));
     if (!next) return null;
     state.direction = next.direction; state.nextDirection = next.direction;
